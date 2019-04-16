@@ -1,6 +1,6 @@
 import tensorflow as tf
 import ssl
-ssl._create_default_https_context = ssl._create_unverified_context# 解决ssl证书错误问题
+ssl._create_default_https_context = ssl._create_unverified_context  # 解决ssl证书错误问题
 import input_data
 # 导入训练数据
 
@@ -13,17 +13,17 @@ batch_size = 100
 display_step = 1
 
 # 定义tf的输入
-x = tf.placeholder(tf.float32,[None,784])# 根据mnist数据集而来，28*28=784
-y = tf.placeholder(tf.float32,[None,10])# 0-9个数字，一共10个类别
+x = tf.placeholder(tf.float32, [None, 784])# 根据mnist数据集而来，28*28=784
+y = tf.placeholder(tf.float32, [None, 10])# 0-9个数字，一共10个类别
 
 # 设置权重
-W = tf.Variable(tf.zeros([784,10]))# 一个784*10的矩阵，初始值都为0
+W = tf.Variable(tf.zeros([784, 10]))# 一个784*10的矩阵，初始值都为0
 b = tf.Variable(tf.zeros([10]))
 
 # 构造模型 softmax函数可以将一个任意的K维度向量压缩到另一个K维向量中，使得每一个元素都在0-1之间，而且和为1
 # Softmax = soft+max 不是最大值，是按照概率的"最大值"，但是其他的值也可以取的到
 
-pred = tf.nn.softmax(tf.matmul(x,W)+b)#矩阵的乘法 matrix multiply
+pred = tf.nn.softmax(tf.matmul(x, W)+b)#矩阵的乘法 matrix multiply
 # Minimize error using cross entropy 交叉熵
 cost = tf.reduce_mean(-tf.reduce_sum(y*tf.log(pred), reduction_indices=1))
 # Gradient Descent
