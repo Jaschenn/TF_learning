@@ -2,14 +2,15 @@ import tensorflow as tf
 import numpy as np
 import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
-import input_data
+import 实战.input_data as inp
 
 # 设置参数表示训练阶段和测试阶段
 batch_size = 256
 test_size = 512
 # 定义图像的参数 这里是mnist的数据集，所以是28*28
 img_size = 28
+img_height = 46
+img_weight = 29
 # 将数值0-9都设置一个类
 num_class = 10
 
@@ -54,17 +55,21 @@ def model(X, w, w2, w3, w4, w_o, p_keep_conv, p_keep_hidden):
 
 
 # 导入训练数据
+'''
+image, label = ind.read_datasets()
 
-mnist = input_data.read_data_sets("MNIST_data", one_hot=True)
+trX, trY, TeX, TeY = image, label, image, label
+
+'''
+mnist = inp.read_data_sets("data", one_hot=True)
 trX, trY, TeX, TeY = mnist.train.images, mnist.train.labels, mnist.test.images, mnist.test.labels
-print(trX.shape)
-print(trY.shape)
-# 输入集需要随着形状发生变化
-trX = trX.reshape(-1, img_size, img_size, 1)  # 第一个
-TeX = TeX.reshape(-1, img_size, img_size, 1)
+
+# 输入集需要随着形状发生变化 todo:将输入集形状确定下来
+trX = trX.reshape(-1, img_weight, img_height, 1)  # 第一个
+TeX = TeX.reshape(-1, img_weight, img_height, 1)
 
 # 定义输入和输出
-X = tf.placeholder("float", [None, img_size, img_size, 1], "X")
+X = tf.placeholder("float", [None, img_weight, img_height, 1], "X")
 Y = tf.placeholder("float", [None, num_class], "Y")
 
 # 构建第一层
@@ -75,7 +80,7 @@ w2 = init_weights([3, 3, 32, 64])  # 输入数量为32，第二层的每一个�
 w3 = init_weights([3, 3, 64, 128])  # 第三个卷积层由3*3*64而来，输出的特征值的数量为128
 
 # 第四层为全链接层
-w4 = init_weights([128 * 4 * 4, 625])
+w4 = init_weights([128 * 4 * 6, 625])
 
 # 输出层
 w_o = init_weights([625, num_class])  # 输出是类的数量
@@ -91,10 +96,29 @@ optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(cost)
 
 # 是输出维度中最大值的索引
 predict_op = tf.argmax(py_x, 1)
-
+'''
 with tf.Session() as sess:
     tf.global_variables_initializer().run()
     for i in range(100):  # 取第一批
+        training_batch = zip(range(0, len(trX), batch_size), range(batch_size, len(trX) + 1, batch_size))
+        for start, end in training_batch:
+            print("x===>", trX)
+            print("y===>", trY)
+            sess.run(optimizer, feed_dict={X: trX[start:end],
+                                           Y: trY[start:end],
+                                           p_keep_conv: 0.8, p_keep_hidden: 0.5})
+        test_indices = np.arange(len(TeX))
+        np.random.shuffle(test_indices)
+        test_indices = test_indices[0:test_size]
+        pred = sess.run(predict_op,
+                        feed_dict={X: TeX[test_indices], Y: TeY[test_indices], p_keep_conv: 1.0, p_keep_hidden: 1.0})
+        arg_max = np.argmax(TeY[test_indices], axis=0)
+        print(i, np.mean(pred == arg_max))
+'''
+step = 0
+with tf.Session() as sess:
+    tf.global_variables_initializer().run()
+    for i in range(10):  # 取第一批
         training_batch = zip(range(0, len(trX), batch_size), range(batch_size, len(trX) + 1, batch_size))
         for start, end in training_batch:
             sess.run(optimizer, feed_dict={X: trX[start:end],
@@ -108,3 +132,6 @@ with tf.Session() as sess:
                         feed_dict={X: TeX[test_indices], Y: TeY[test_indices], p_keep_conv: 1.0, p_keep_hidden: 1.0})
         print("本次迭代之后的结果是：")
         print(i, np.mean(arg_max == pred))
+        step = step + 1
+    saver = tf.train.Saver(max_to_keep=1)
+    saver.save(sess, './model.model', global_step=step)
